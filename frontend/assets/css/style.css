@@ -1,0 +1,280 @@
+/* CSS Variables for reference */
+:root {
+    --color-main: #D5C2A5;      /* Darker, moodier parchment */
+    --color-panel: #C4B091;     /* Darker side panels */
+    --color-primary: #24140C;   /* Deep rich brown for text contrast */
+    --color-accent: #244212;    /* Darker forest green */
+    --color-accent-secondary: #3D6A24; 
+    --color-divider: #5C3A21;   /* Richer brown for borders */
+    --color-highlight: #B38E36; /* Deepened gold */
+    --color-shadow: #120A06;
+    --color-panel-light: #E0CDB2; /* Darkened input backgrounds */
+    --color-danger: #7A1414;
+    --color-term-bg: #0A0A0A;
+    --color-term-text: #00E63B;
+}
+
+/* Base Styles & Scrollbar */
+body {
+    background-color: var(--color-main);
+    color: var(--color-primary);
+}
+
+.scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
+}
+.scrollbar-custom::-webkit-scrollbar-track {
+    background: var(--color-panel);
+    border-left: 1px solid var(--color-divider);
+}
+.scrollbar-custom::-webkit-scrollbar-thumb {
+    background: var(--color-divider);
+    border-radius: 4px;
+}
+.scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background: var(--color-highlight);
+}
+
+/* ANIMATION 1: Candle Flicker */
+@keyframes candleFlicker {
+    0%   { box-shadow: inset 0 0 60px rgba(255,140,0,0.15); }
+    33%  { box-shadow: inset 0 0 80px rgba(255,100,0,0.08); }
+    66%  { box-shadow: inset 0 0 40px rgba(255,160,0,0.20); }
+    100% { box-shadow: inset 0 0 60px rgba(255,140,0,0.15); }
+}
+
+.sidebar {
+    animation: candleFlicker 3s infinite;
+    /* steps that are not evenly distributed to make it feel organic and random */
+    animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ANIMATION 3: Sword Hover & Shimmer */
+@keyframes sweepShimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.shimmer-effect {
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent);
+    transition: all 0.5s ease;
+}
+
+.nav-item:hover .shimmer-effect {
+    animation: sweepShimmer 0.5s ease forwards;
+}
+
+/* LIQUID BUTTONS */
+.liquid-btn {
+    position: relative;
+    overflow: hidden;
+    background-color: #2D5016;
+    color: #FDF3E3;
+    border: 2px solid #C9A84C;
+    font-family: 'Cinzel', serif;
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+    padding: 12px 32px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: color 0.4s ease;
+    display: inline-block;
+}
+
+.liquid-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: #C9A84C;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+    z-index: 0;
+}
+
+.liquid-btn:hover::before {
+    width: 400px;
+    height: 400px;
+}
+
+.liquid-btn:hover {
+    color: #2C1810;
+}
+
+/* TERMINAL OUTPUT WINDOW */
+.terminal-window {
+    background: #0D0D0D;
+    border: 1px solid #2D5016;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    color: #00FF41;
+    font-size: 0.85rem;
+    height: 200px;
+    overflow-y: auto;
+    padding: 12px;
+    margin-top: 0px; 
+    border-top: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.terminal-titlebar {
+    background: #1A1A1A;
+    color: #4A7C2F;
+    padding: 6px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    border: 1px solid #2D5016;
+    border-bottom: 1px solid #2D5016;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    margin-top: 20px;
+}
+
+.terminal-cursor {
+    display: inline-block;
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.terminal-content div {
+    margin-bottom: 4px;
+    word-break: break-all;
+}
+
+/* ANIMATED PROGRESS BAR */
+.stone-progress-bar {
+    height: 28px;
+    background: #1A0F0A;
+    border: 2px solid #6B3A2A;
+    border-radius: 2px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+    position: relative;
+    overflow: hidden;
+}
+
+.stone-progress-fill {
+    height: 100%;
+    background: #2D5016;
+    transition: width 0.3s ease, background-color 0.5s ease;
+    width: 0%;
+}
+
+/* MEDIEVAL TOAST NOTIFICATIONS */
+.toast-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    font-family: 'Cinzel', serif;
+    padding: 14px 20px;
+    border-radius: 3px;
+    border: 2px solid;
+    /* Parchment style border */
+    border-image: linear-gradient(45deg, #6B3A2A, #C9A84C) 1;
+    box-shadow: 0 4px 12px rgba(26, 15, 10, 0.6);
+    transform-origin: top;
+    animation: toastAppear 0.4s ease-out forwards;
+    min-width: 250px;
+}
+
+.toast.toast-leave {
+    animation: toastDisappear 0.4s ease-in forwards;
+}
+
+@keyframes toastAppear {
+    from { transform: scaleY(0); opacity: 0; }
+    to { transform: scaleY(1); opacity: 1; }
+}
+
+@keyframes toastDisappear {
+    from { transform: scaleY(1); opacity: 1; }
+    to { transform: scaleY(0); opacity: 0; }
+}
+
+.toast-success {
+    background: #C9A84C;
+    color: #2C1810;
+}
+
+.toast-warning {
+    background: #D4831A;
+    color: #FDF3E3;
+}
+
+.toast-error {
+    background: #8B1A1A;
+    color: #FDF3E3;
+}
+
+/* Custom Checkbox & Radio */
+.custom-checkbox, .custom-radio {
+    accent-color: #C9A84C;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* File input styling */
+.custom-file-input::file-selector-button {
+    font-family: 'Cinzel', serif;
+    background: #1A0F0A;
+    color: #C9A84C;
+    border: 1px solid #6B3A2A;
+    padding: 6px 12px;
+    border-radius: 2px;
+    cursor: pointer;
+    margin-right: 12px;
+    transition: all 0.3s ease;
+}
+.custom-file-input::file-selector-button:hover {
+    background: #2C1810;
+    color: #FDF3E3;
+}
+
+/* THE WARDEN CHATBOT */
+.warden-open {
+    display: flex !important;
+    animation: wardenUnfurl 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes wardenUnfurl {
+    0% { transform: scaleY(0); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: scaleY(1); opacity: 1; }
+}
+
+#warden-chat-content::-webkit-scrollbar {
+    width: 6px;
+}
+#warden-chat-content::-webkit-scrollbar-track {
+    background: #0A0A0A;
+}
+#warden-chat-content::-webkit-scrollbar-thumb {
+    background: #2D5016;
+    border-radius: 3px;
+}
+#warden-chat-content::-webkit-scrollbar-thumb:hover {
+    background: #4A7C2F;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease forwards;
+}

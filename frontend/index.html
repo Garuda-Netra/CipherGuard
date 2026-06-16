@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CipherGuard — Password Credential Audit Suite</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        main: '#F5E6C8',
+                        panel: '#E8D5A3',
+                        'panel-light': '#FDF3E3',
+                        primary: '#2C1810',
+                        accent: '#2D5016',
+                        'accent-secondary': '#4A7C2F',
+                        divider: '#6B3A2A',
+                        highlight: '#C9A84C',
+                        danger: '#8B1A1A',
+                        terminalBg: '#0D0D0D',
+                        terminalText: '#00FF41'
+                    },
+                    fontFamily: {
+                        heading: ['Cinzel', 'serif'],
+                        body: ['"IM Fell English"', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        deep: '0 4px 20px rgba(26, 15, 10, 0.4)',
+                        candle: 'inset 0 0 60px rgba(255,140,0,0.15)'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=IM+Fell+English:ital@0;1&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="bg-main text-primary font-body overflow-hidden">
+    <!-- Canvas for Dust Particles -->
+    <canvas id="dustCanvas" class="fixed inset-0 z-[-1] pointer-events-none w-full h-full"></canvas>
+
+    <!-- Top Navbar -->
+    <nav class="fixed top-0 left-0 w-full h-16 bg-panel border-b border-divider z-50 flex items-center justify-between px-6 shadow-deep">
+        <!-- Left: Logo -->
+        <div class="flex items-center gap-3">
+            <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <h1 class="font-heading text-xl font-bold tracking-wider text-primary">CipherGuard</h1>
+        </div>
+        <!-- Center: Sloka -->
+        <div class="font-body italic text-sm text-primary opacity-80 hidden md:block">
+            यद्भावं तद्भवति — As you think, so you become. Weak passwords fall, strong ones endure.
+        </div>
+        <!-- Right: Secure Mode -->
+        <div class="flex items-center gap-2 font-heading text-sm font-bold" title="Secure Environment">
+            <span class="text-primary uppercase tracking-wider">Secure</span>
+            <svg class="w-5 h-5 text-danger" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" fill="none"></path>
+            </svg>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="flex h-screen pt-16">
+        <!-- Sidebar -->
+        <aside class="sidebar w-[240px] h-full bg-panel border-r border-divider flex flex-col justify-between shrink-0 shadow-candle relative z-40">
+            <div class="p-6">
+                <h2 class="font-heading text-sm text-primary opacity-60 mb-6 tracking-widest uppercase">Navigation</h2>
+                <ul class="flex flex-col gap-2">
+                    <!-- Nav Items -->
+                    <!-- Dashboard -->
+                    <li>
+                        <button class="nav-item group w-full flex items-center gap-3 px-4 py-3 text-left font-heading text-sm text-primary hover:text-danger hover:bg-primary/5 transition-colors relative overflow-hidden rounded-sm" data-target="dashboard">
+                            <svg class="sword-icon absolute left-2 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 w-5 h-5 text-danger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14.5 17.5L3 6l2.5-2.5 11.5 11.5m-3-3l-2.5-2.5m3 3l2.5 2.5m-11.5-11.5L21 21M5 5l2 2"/>
+                            </svg>
+                            <svg class="w-5 h-5 ml-4 group-hover:opacity-0 transition-opacity absolute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                <polyline points="9 22 9 12 15 12 15 22"/>
+                            </svg>
+                            <span class="pl-10 relative z-10">Dashboard</span>
+                            <div class="shimmer-effect absolute inset-0 -translate-x-full group-hover:animate-shimmer pointer-events-none"></div>
+                        </button>
+                    </li>
+                    <!-- Dictionary Generator -->
+                    <li>
+                        <button class="nav-item group w-full flex items-center gap-3 px-4 py-3 text-left font-heading text-sm text-primary hover:text-danger hover:bg-primary/5 transition-colors relative overflow-hidden rounded-sm" data-target="dictionary">
+                            <svg class="sword-icon absolute left-2 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 w-5 h-5 text-danger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14.5 17.5L3 6l2.5-2.5 11.5 11.5m-3-3l-2.5-2.5m3 3l2.5 2.5m-11.5-11.5L21 21M5 5l2 2"/>
+                            </svg>
+                            <svg class="w-5 h-5 ml-4 group-hover:opacity-0 transition-opacity absolute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                            </svg>
+                            <span class="pl-10 relative z-10">Dictionary Generator</span>
+                            <div class="shimmer-effect absolute inset-0 -translate-x-full group-hover:animate-shimmer pointer-events-none"></div>
+                        </button>
+                    </li>
+                    <!-- Hash Extractor -->
+                    <li>
+                        <button class="nav-item group w-full flex items-center gap-3 px-4 py-3 text-left font-heading text-sm text-primary hover:text-danger hover:bg-primary/5 transition-colors relative overflow-hidden rounded-sm" data-target="hash">
+                            <svg class="sword-icon absolute left-2 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 w-5 h-5 text-danger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14.5 17.5L3 6l2.5-2.5 11.5 11.5m-3-3l-2.5-2.5m3 3l2.5 2.5m-11.5-11.5L21 21M5 5l2 2"/>
+                            </svg>
+                            <svg class="w-5 h-5 ml-4 group-hover:opacity-0 transition-opacity absolute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="4" y1="9" x2="20" y2="9"/>
+                                <line x1="4" y1="15" x2="20" y2="15"/>
+                                <line x1="10" y1="3" x2="8" y2="21"/>
+                                <line x1="16" y1="3" x2="14" y2="21"/>
+                            </svg>
+                            <span class="pl-10 relative z-10">Hash Extractor</span>
+                            <div class="shimmer-effect absolute inset-0 -translate-x-full group-hover:animate-shimmer pointer-events-none"></div>
+                        </button>
+                    </li>
+                    <!-- Brute Force Engine -->
+                    <li>
+                        <button class="nav-item group w-full flex items-center gap-3 px-4 py-3 text-left font-heading text-sm text-primary hover:text-danger hover:bg-primary/5 transition-colors relative overflow-hidden rounded-sm" data-target="brute">
+                            <svg class="sword-icon absolute left-2 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 w-5 h-5 text-danger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14.5 17.5L3 6l2.5-2.5 11.5 11.5m-3-3l-2.5-2.5m3 3l2.5 2.5m-11.5-11.5L21 21M5 5l2 2"/>
+                            </svg>
+                            <svg class="w-5 h-5 ml-4 group-hover:opacity-0 transition-opacity absolute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                            </svg>
+                            <span class="pl-10 relative z-10">Brute Force Engine</span>
+                            <div class="shimmer-effect absolute inset-0 -translate-x-full group-hover:animate-shimmer pointer-events-none"></div>
+                        </button>
+                    </li>
+                    <!-- Password Strength -->
+                    <li>
+                        <button class="nav-item group w-full flex items-center gap-3 px-4 py-3 text-left font-heading text-sm text-primary hover:text-danger hover:bg-primary/5 transition-colors relative overflow-hidden rounded-sm" data-target="strength">
+                            <svg class="sword-icon absolute left-2 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 w-5 h-5 text-danger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14.5 17.5L3 6l2.5-2.5 11.5 11.5m-3-3l-2.5-2.5m3 3l2.5 2.5m-11.5-11.5L21 21M5 5l2 2"/>
+                            </svg>
+                            <svg class="w-5 h-5 ml-4 group-hover:opacity-0 transition-opacity absolute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                            <span class="pl-10 relative z-10">Password Strength</span>
+                            <div class="shimmer-effect absolute inset-0 -translate-x-full group-hover:animate-shimmer pointer-events-none"></div>
+                        </button>
+                    </li>
+                    <!-- Report -->
+                    <li>
+                        <button class="nav-item group w-full flex items-center gap-3 px-4 py-3 text-left font-heading text-sm text-primary hover:text-danger hover:bg-primary/5 transition-colors relative overflow-hidden rounded-sm" data-target="report">
+                            <svg class="sword-icon absolute left-2 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 w-5 h-5 text-danger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14.5 17.5L3 6l2.5-2.5 11.5 11.5m-3-3l-2.5-2.5m3 3l2.5 2.5m-11.5-11.5L21 21M5 5l2 2"/>
+                            </svg>
+                            <svg class="w-5 h-5 ml-4 group-hover:opacity-0 transition-opacity absolute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                                <polyline points="10 9 9 9 8 9"/>
+                            </svg>
+                            <span class="pl-10 relative z-10">Report</span>
+                            <div class="shimmer-effect absolute inset-0 -translate-x-full group-hover:animate-shimmer pointer-events-none"></div>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <!-- Footer -->
+            <div class="p-6 text-center border-t border-divider">
+                <span class="font-heading text-xs text-primary opacity-70">Engineered & Crafted by Raj</span>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 h-full overflow-y-auto p-8 relative scrollbar-custom">
+            
+            <!-- PANEL 1: Dashboard -->
+            <section id="panel-dashboard" class="panel-section active min-h-full flex flex-col justify-center max-w-5xl mx-auto">
+                <div class="text-center mb-16">
+                    <h2 class="font-heading text-4xl md:text-5xl font-bold text-primary mb-6 drop-shadow-sm">Welcome to CipherGuard</h2>
+                    <p class="font-body text-2xl italic text-primary opacity-90 max-w-3xl mx-auto mb-12 relative">
+                        <span class="absolute -left-6 -top-4 text-4xl text-highlight opacity-30">"</span>
+                        यद्भावं तद्भवति — As you think, so you become. <br/> Weak passwords fall, strong ones endure.
+                        <span class="absolute -right-6 bottom-0 text-4xl text-highlight opacity-30">"</span>
+                    </p>
+                    <p class="font-body text-lg text-primary opacity-80 max-w-2xl mx-auto mb-16 leading-relaxed">
+                        CipherGuard is a premium Password Credential Audit Suite designed to simulate, analyze, and fortify authentication mechanisms against modern cryptographic attacks.
+                    </p>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+                    <div class="stat-card bg-panel-light p-6 rounded-md border border-divider shadow-md relative overflow-hidden group">
+                        <div class="absolute inset-0 bg-accent opacity-0 group-hover:opacity-5 transition-opacity"></div>
+                        <h3 class="font-heading text-sm text-primary opacity-70 mb-2 uppercase tracking-wider">Total Words Generated</h3>
+                        <div class="font-mono text-3xl font-bold text-highlight" id="stat-words">0</div>
+                    </div>
+                    <div class="stat-card bg-panel-light p-6 rounded-md border border-divider shadow-md relative overflow-hidden group">
+                        <div class="absolute inset-0 bg-accent opacity-0 group-hover:opacity-5 transition-opacity"></div>
+                        <h3 class="font-heading text-sm text-primary opacity-70 mb-2 uppercase tracking-wider">Hashes Extracted</h3>
+                        <div class="font-mono text-3xl font-bold text-highlight" id="stat-hashes">0</div>
+                    </div>
+                    <div class="stat-card bg-panel-light p-6 rounded-md border border-divider shadow-md relative overflow-hidden group">
+                        <div class="absolute inset-0 bg-accent opacity-0 group-hover:opacity-5 transition-opacity"></div>
+                        <h3 class="font-heading text-sm text-primary opacity-70 mb-2 uppercase tracking-wider">Passwords Cracked</h3>
+                        <div class="font-mono text-3xl font-bold text-highlight" id="stat-cracked">0</div>
+                    </div>
+                    <div class="stat-card bg-panel-light p-6 rounded-md border border-divider shadow-md relative overflow-hidden group">
+                        <div class="absolute inset-0 bg-accent opacity-0 group-hover:opacity-5 transition-opacity"></div>
+                        <h3 class="font-heading text-sm text-primary opacity-70 mb-2 uppercase tracking-wider">Passwords Analyzed</h3>
+                        <div class="font-mono text-3xl font-bold text-highlight" id="stat-analyzed">0</div>
+                    </div>
+                </div>
+
+                <div class="mt-auto text-center pb-4">
+                    <span class="font-heading text-sm text-primary opacity-60">Engineered & Crafted by Raj</span>
+                </div>
+            </section>
+
+            <!-- PANEL 2: Dictionary Generator -->
+            <section id="panel-dictionary" class="panel-section hidden max-w-4xl mx-auto py-8">
+                <h2 class="panel-heading font-heading text-3xl font-bold text-primary mb-8 border-b border-divider pb-4 inline-block"></h2>
+                
+                <div class="bg-panel-light p-8 rounded-sm border border-divider shadow-md mb-8">
+                    <div class="mb-6">
+                        <label class="block font-heading text-sm font-semibold mb-2 text-primary">Base Words</label>
+                        <input type="text" id="dict-base-words" placeholder="raj, password, admin" class="w-full bg-main border border-divider p-3 font-body text-primary focus:outline-none focus:border-highlight transition-colors rounded-sm shadow-inner">
+                        <p class="font-body text-xs mt-2 opacity-70">Comma-separated list of target-specific keywords.</p>
+                    </div>
+
+                    <div class="mb-8">
+                        <label class="block font-heading text-sm font-semibold mb-3 text-primary">Mutation Rules</label>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 font-body">
+                            <label class="flex items-center gap-2 cursor-pointer group"><input type="checkbox" value="leet" class="custom-checkbox"><span class="group-hover:text-danger hover:bg-primary/5 transition-colors">Leet Speak</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer group"><input type="checkbox" value="upper" class="custom-checkbox"><span class="group-hover:text-danger hover:bg-primary/5 transition-colors">UPPERCASE</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer group"><input type="checkbox" value="title" class="custom-checkbox"><span class="group-hover:text-danger hover:bg-primary/5 transition-colors">Title Case</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer group"><input type="checkbox" value="num" class="custom-checkbox"><span class="group-hover:text-danger hover:bg-primary/5 transition-colors">Append Numbers</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer group"><input type="checkbox" value="sym" class="custom-checkbox"><span class="group-hover:text-danger hover:bg-primary/5 transition-colors">Append Symbols</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer group"><input type="checkbox" value="kb" class="custom-checkbox"><span class="group-hover:text-danger hover:bg-primary/5 transition-colors">Keyboard Patterns</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer group"><input type="checkbox" value="common" class="custom-checkbox"><span class="group-hover:text-danger hover:bg-primary/5 transition-colors">Common Bases</span></label>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-6">
+                        <button class="liquid-btn" id="btn-generate-dict">
+                            <span class="relative z-10">Generate Wordlist</span>
+                        </button>
+                        <span id="dict-total-words" class="font-heading text-sm font-bold text-highlight opacity-0 transition-opacity duration-300">Total Words: <span class="font-mono">0</span></span>
+                    </div>
+                </div>
+
+                <!-- Terminal -->
+                <div class="terminal-container">
+                    <div class="terminal-titlebar">[ CipherGuard Terminal ] - Dictionary Output</div>
+                    <div class="terminal-window" id="term-dictionary">
+                        <div class="terminal-content"></div>
+                        <span class="terminal-cursor">█</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PANEL 3: Hash Extractor -->
+            <section id="panel-hash" class="panel-section hidden max-w-4xl mx-auto py-8">
+                <h2 class="panel-heading font-heading text-3xl font-bold text-primary mb-8 border-b border-divider pb-4 inline-block"></h2>
+                
+                <div class="bg-panel-light p-8 rounded-sm border border-divider shadow-md mb-8">
+                    <div class="mb-6">
+                        <label class="block font-heading text-sm font-semibold mb-4 text-primary">Target OS / Methodology</label>
+                        <div class="flex gap-6 font-body">
+                            <label class="flex items-center gap-2 cursor-pointer group"><input type="radio" name="hash-os" value="linux" checked class="custom-radio"><span class="group-hover:text-danger hover:bg-primary/5 transition-colors">Linux (Shadow File)</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer group"><input type="radio" name="hash-os" value="windows" class="custom-radio"><span class="group-hover:text-danger hover:bg-primary/5 transition-colors">Windows (SAM + SYSTEM)</span></label>
+                        </div>
+                    </div>
+
+                    <div class="mb-8" id="hash-upload-linux">
+                        <label class="block font-heading text-sm font-semibold mb-2 text-primary">Upload Shadow File</label>
+                        <input type="file" id="file-shadow" class="custom-file-input w-full bg-main border border-divider p-2 font-body">
+                    </div>
+
+                    <div class="mb-8 hidden" id="hash-upload-windows">
+                        <label class="block font-heading text-sm font-semibold mb-2 text-primary">Upload SAM & SYSTEM Hives</label>
+                        <div class="flex gap-4">
+                            <input type="file" id="file-sam" class="custom-file-input flex-1 bg-main border border-divider p-2 font-body" title="SAM Hive">
+                            <input type="file" id="file-system" class="custom-file-input flex-1 bg-main border border-divider p-2 font-body" title="SYSTEM Hive">
+                        </div>
+                    </div>
+
+                    <button class="liquid-btn" id="btn-extract-hashes">
+                        <span class="relative z-10">Extract Hashes</span>
+                    </button>
+                </div>
+
+                <!-- Terminal -->
+                <div class="terminal-container mb-8">
+                    <div class="terminal-titlebar">[ CipherGuard Terminal ] - Extraction Process</div>
+                    <div class="terminal-window" id="term-hash">
+                        <div class="terminal-content"></div>
+                        <span class="terminal-cursor">█</span>
+                    </div>
+                </div>
+
+                <!-- Results Table -->
+                <div class="results-table-container overflow-hidden border border-divider rounded-sm hidden" id="hash-results-container">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-[#1A0F0A] text-[#C9A84C] font-heading text-sm uppercase tracking-wider">
+                                <th class="p-4 border-b border-[#6B3A2A]">Username</th>
+                                <th class="p-4 border-b border-[#6B3A2A]">Algorithm</th>
+                                <th class="p-4 border-b border-[#6B3A2A]">Hash Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hash-results-body" class="bg-[#0D0D0D] text-[#00FF41] font-mono text-xs">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- PANEL 4: Brute Force Engine -->
+            <section id="panel-brute" class="panel-section hidden max-w-4xl mx-auto py-8">
+                <h2 class="panel-heading font-heading text-3xl font-bold text-primary mb-8 border-b border-divider pb-4 inline-block"></h2>
+                
+                <div class="bg-panel-light p-8 rounded-sm border border-divider shadow-md mb-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block font-heading text-sm font-semibold mb-2 text-primary">Target Hash Value</label>
+                            <input type="text" id="brute-hash" class="w-full bg-main border border-divider p-3 font-mono text-primary text-sm focus:outline-none focus:border-highlight transition-colors rounded-sm shadow-inner" placeholder="e.g. 5d41402abc4b2a76b9719d911017c592">
+                        </div>
+                        <div>
+                            <label class="block font-heading text-sm font-semibold mb-2 text-primary">Hash Type</label>
+                            <select id="brute-type" class="w-full bg-main border border-divider p-3 font-body text-primary focus:outline-none focus:border-highlight transition-colors rounded-sm shadow-inner cursor-pointer appearance-none bg-no-repeat bg-right" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%236B3A2A\' stroke-width=\'2\'><polyline points=\'6 9 12 15 18 9\'/></svg>'); background-position: right 0.75rem center; background-size: 1.2em;">
+                                <option value="MD5">MD5</option>
+                                <option value="SHA1">SHA-1</option>
+                                <option value="SHA256">SHA-256</option>
+                                <option value="SHA512">SHA-512</option>
+                                <option value="NTLM">NTLM</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-6 border-t border-divider pt-6">
+                        <label class="block font-heading text-sm font-semibold mb-4 text-primary">Attack Mode</label>
+                        <div class="flex gap-6 font-body mb-4">
+                            <label class="flex items-center gap-2 cursor-pointer group"><input type="radio" name="brute-mode" value="wordlist" checked class="custom-radio"><span class="group-hover:text-danger hover:bg-primary/5 transition-colors">Wordlist Mode</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer group"><input type="radio" name="brute-mode" value="incremental" class="custom-radio"><span class="group-hover:text-danger hover:bg-primary/5 transition-colors">Incremental Mode</span></label>
+                        </div>
+                        
+                        <!-- Wordlist input -->
+                        <div id="brute-wordlist-section" class="mt-4">
+                            <input type="file" id="brute-wordlist-file" class="custom-file-input w-full bg-main border border-divider p-2 font-body">
+                        </div>
+                        <!-- Incremental info -->
+                        <div id="brute-incremental-section" class="mt-4 hidden p-4 bg-[#1A0F0A] border border-[#6B3A2A] rounded-sm">
+                            <p class="font-mono text-xs text-[#C9A84C]">CHARSET: ?l?u?d?s (a-z, A-Z, 0-9, !@#...)<br>LENGTH: 1 to 8 chars<br>WARNING: Exhaustive space may take considerable time.</p>
+                        </div>
+                    </div>
+
+                    <button class="liquid-btn mt-2" id="btn-start-cracking">
+                        <span class="relative z-10">Start Cracking</span>
+                    </button>
+                </div>
+
+                <!-- Progress Bar Area -->
+                <div class="mb-6">
+                    <div class="stone-progress-bar">
+                        <div class="stone-progress-fill" id="brute-progress-fill"></div>
+                    </div>
+                    <div class="font-mono text-sm mt-2 flex justify-between text-primary opacity-90">
+                        <span id="brute-progress-text">[░░░░░░░░░░░░░░░░] 0%</span>
+                        <span id="brute-eta">ETA: --:--:--</span>
+                    </div>
+                </div>
+
+                <!-- Result Display -->
+                <div id="brute-result-display" class="hidden mb-6 p-4 border border-divider rounded-sm text-center font-mono font-bold text-lg">
+                    <!-- Status will be injected here -->
+                </div>
+
+                <!-- Terminal -->
+                <div class="terminal-container">
+                    <div class="terminal-titlebar">[ CipherGuard Terminal ] - Cracking Engine</div>
+                    <div class="terminal-window" id="term-brute">
+                        <div class="terminal-content"></div>
+                        <span class="terminal-cursor">█</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PANEL 5: Password Strength -->
+            <section id="panel-strength" class="panel-section hidden max-w-4xl mx-auto py-8">
+                <h2 class="panel-heading font-heading text-3xl font-bold text-primary mb-8 border-b border-divider pb-4 inline-block"></h2>
+                
+                <div class="bg-panel-light p-8 rounded-sm border border-divider shadow-md mb-8">
+                    <div class="mb-8 relative">
+                        <label class="block font-heading text-sm font-semibold mb-2 text-primary">Enter Password to Analyze</label>
+                        <div class="relative">
+                            <input type="password" id="strength-input" class="w-full bg-main border-2 border-divider p-4 pr-12 font-mono text-lg text-primary focus:outline-none focus:border-highlight transition-colors rounded-sm shadow-inner" placeholder="Type password here...">
+                            <button id="toggle-password" class="absolute right-4 top-1/2 -translate-y-1/2 text-primary opacity-60 hover:opacity-100 transition-opacity">
+                                <svg class="w-6 h-6" id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Strength Meter -->
+                    <div class="mb-8">
+                        <div class="flex justify-between items-end mb-2">
+                            <span class="font-heading text-sm font-bold uppercase tracking-wider text-primary">Strength Level: <span id="strength-label" class="text-accent">-</span></span>
+                            <span class="font-mono text-sm font-bold opacity-80" id="entropy-score">Entropy: 0.0 bits</span>
+                        </div>
+                        <div class="h-3 w-full bg-[#1A0F0A] rounded-full overflow-hidden flex shadow-inner">
+                            <div class="h-full w-1/4 border-r border-[#1A0F0A] transition-colors duration-300" id="meter-1"></div>
+                            <div class="h-full w-1/4 border-r border-[#1A0F0A] transition-colors duration-300" id="meter-2"></div>
+                            <div class="h-full w-1/4 border-r border-[#1A0F0A] transition-colors duration-300" id="meter-3"></div>
+                            <div class="h-full w-1/4 transition-colors duration-300" id="meter-4"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <!-- Checklist -->
+                        <div>
+                            <h3 class="font-heading text-sm font-bold mb-4 uppercase text-primary border-b border-divider pb-2">Requirements</h3>
+                            <ul class="font-body text-sm space-y-3" id="strength-checklist">
+                                <li class="flex items-center gap-3 req-item" data-req="length">
+                                    <span class="icon text-danger">✖</span> Minimum 8 characters
+                                </li>
+                                <li class="flex items-center gap-3 req-item" data-req="upper">
+                                    <span class="icon text-danger">✖</span> Uppercase letter
+                                </li>
+                                <li class="flex items-center gap-3 req-item" data-req="lower">
+                                    <span class="icon text-danger">✖</span> Lowercase letter
+                                </li>
+                                <li class="flex items-center gap-3 req-item" data-req="number">
+                                    <span class="icon text-danger">✖</span> Number
+                                </li>
+                                <li class="flex items-center gap-3 req-item" data-req="special">
+                                    <span class="icon text-danger">✖</span> Special symbol
+                                </li>
+                            </ul>
+                        </div>
+                        <!-- Tips -->
+                        <div>
+                            <h3 class="font-heading text-sm font-bold mb-4 uppercase text-primary border-b border-divider pb-2">Improvement Tips</h3>
+                            <ul class="font-body text-sm space-y-2 list-disc pl-5 opacity-80" id="strength-tips">
+                                <li>Start typing to see personalized recommendations.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <button class="liquid-btn" id="btn-analyze-full">
+                        <span class="relative z-10">Analyze Full Report</span>
+                    </button>
+                </div>
+
+                <!-- Terminal -->
+                <div class="terminal-container">
+                    <div class="terminal-titlebar">[ CipherGuard Terminal ] - Deep Analysis Output</div>
+                    <div class="terminal-window" id="term-strength">
+                        <div class="terminal-content"></div>
+                        <span class="terminal-cursor">█</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PANEL 6: Report -->
+            <section id="panel-report" class="panel-section hidden max-w-5xl mx-auto py-8">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="panel-heading font-heading text-3xl font-bold text-primary border-b border-divider pb-4 inline-block m-0"></h2>
+                    <div class="flex gap-4">
+                        <button class="liquid-btn" id="btn-generate-report">
+                            <span class="relative z-10">Generate Report</span>
+                        </button>
+                        <button class="liquid-btn" id="btn-copy-report">
+                            <span class="relative z-10">Copy Report</span>
+                        </button>
+                        <button class="liquid-btn" id="btn-print-report">
+                            <span class="relative z-10">Print Report</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Parchment Report Container -->
+                <div class="bg-[#FDF3E3] p-12 rounded-sm border border-[#6B3A2A] shadow-candle relative" id="report-content-area" style="background-image: url('data:image/svg+xml;utf8,<svg width=\'100%\' height=\'100%\' xmlns=\'http://www.w3.org/2000/svg\'><filter id=\'noise\'><feTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'4\' stitchTiles=\'stitch\'/></filter><rect width=\'100%\' height=\'100%\' filter=\'url(%23noise)\' opacity=\'0.05\'/></svg>');">
+                    
+                    <div class="text-center mb-10 border-b-2 border-[#2C1810] pb-6">
+                        <h1 class="font-heading text-4xl font-bold text-[#1A0F0A] uppercase tracking-widest mb-2">Security Audit Report</h1>
+                        <p class="font-heading text-sm font-bold text-[#6B3A2A]">Generated by CipherGuard Engine</p>
+                        <p class="font-mono text-xs mt-2 text-[#4A7C2F]" id="report-date">Date: YYYY-MM-DD HH:MM:SS</p>
+                    </div>
+
+                    <div id="report-body" class="font-body text-[#2C1810] space-y-8 leading-relaxed">
+                        <!-- Content populated by API -->
+                        <div class="text-center opacity-50 italic py-20">
+                            Click "Generate Report" to compile findings into this document.
+                        </div>
+                    </div>
+
+                    <div class="mt-16 pt-8 border-t-2 border-[#2C1810] text-center">
+                        <p class="font-heading text-sm text-[#1A0F0A] opacity-80 uppercase tracking-widest">Engineered & Crafted by Raj</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- The Warden Chatbot -->
+    <div id="warden-fab" class="fixed bottom-8 right-8 w-16 h-16 bg-accent border-2 border-highlight rounded-full flex items-center justify-center cursor-pointer shadow-[0_0_20px_rgba(179,142,54,0.3)] hover:shadow-[0_0_30px_rgba(179,142,54,0.6)] hover:scale-110 transition-all duration-300 z-50 group">
+        <svg class="w-8 h-8 text-[#FDF3E3] group-hover:text-highlight transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <div class="absolute -top-10 font-heading text-highlight text-xs font-bold tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap drop-shadow-md">The Warden</div>
+    </div>
+
+    <div id="warden-panel" class="fixed bottom-28 right-8 w-80 md:w-96 bg-panel-light border-[3px] border-divider rounded-md shadow-deep z-50 hidden flex-col overflow-hidden origin-bottom transition-all duration-300">
+        <!-- Header -->
+        <div class="bg-panel border-b border-divider p-4 flex justify-between items-center relative overflow-hidden">
+            <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-10"></div>
+            <div class="flex items-center gap-3 relative z-10">
+                <svg class="w-5 h-5 text-danger" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <h3 class="font-heading text-primary text-lg font-bold tracking-widest drop-shadow-sm">The Warden</h3>
+            </div>
+            <button id="warden-close" class="text-primary hover:text-danger transition-colors relative z-10 opacity-70 hover:opacity-100">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
+        
+        <!-- Chat Area -->
+        <div id="warden-chat-content" class="flex-1 bg-main p-5 overflow-y-auto h-[380px] scrollbar-custom relative space-y-5">
+            <!-- Background Runes -->
+            <div class="absolute inset-0 pointer-events-none opacity-5 flex items-center justify-center font-heading text-5xl text-primary rotate-[-10deg] select-none break-all p-8 overflow-hidden" aria-hidden="true">
+                ᛉᚢᚱᚲᛋᚷᚻᛁᛏᛒᛖᛗᛚᛜ ᛉᚢᚱᚲᛋᚷ
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-3 bg-panel-light border-t border-divider relative z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+            <div class="flex items-center gap-2 bg-main border border-divider rounded-full px-4 py-1 focus-within:border-highlight transition-colors shadow-inner">
+                <input type="text" id="warden-input" class="flex-1 bg-transparent p-2 font-body text-primary focus:outline-none placeholder-opacity-60 placeholder-primary" placeholder="Speak with The Warden...">
+                <button id="warden-send" class="text-primary hover:text-danger hover:scale-110 transition-all p-2 opacity-80 hover:opacity-100">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="assets/js/animations.js"></script>
+    <script src="assets/js/warden.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "cipherguard-node-server",
+  "version": "1.0.0",
+  "description": "CipherGuard Node.js helper server — Engineered & Crafted by Raj",
+  "main": "server.js",
+  "author": "Raj",
+  "license": "MIT",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "node-fetch": "^2.7.0",
+    "@google/generative-ai": "^0.2.1"
+  }
+}

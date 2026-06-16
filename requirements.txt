@@ -1,0 +1,11 @@
+# CipherGuard — Python Dependencies
+# Install with: pip install -r requirements.txt
+# Engineered & Crafted by Raj
+
+flask==3.0.0
+flask-cors==4.0.0
+python-dotenv==1.0.0
+passlib==1.7.4
+impacket==0.11.0
+colorama==0.4.6
+tqdm==4.66.1
