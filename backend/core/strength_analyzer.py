@@ -7,9 +7,34 @@ Engineered & Crafted by Raj
 
 import math
 import re
+import hashlib
+import requests
+import os
 
 # Common passwords import karo — duplicate logic se bachne ke liye
 from .dict_generator import COMMON_PASSWORDS
+
+def check_pwned_password(password):
+    """
+    HaveIBeenPwned API (k-Anonymity) se check karta hai ki password breach hua hai ya nahi.
+    Returns: (is_pwned: bool, count: int)
+    """
+    try:
+        sha1_hash = hashlib.sha1(password.encode('utf-8')).hexdigest().upper()
+        prefix, suffix = sha1_hash[:5], sha1_hash[5:]
+        base_url = os.environ.get('HIBP_API_URL', 'https://api.pwnedpasswords.com/range/')
+        if not base_url.endswith('/'):
+            base_url += '/'
+        response = requests.get(f"{base_url}{prefix}", timeout=5)
+        if response.status_code != 200:
+            return False, 0
+        hashes = (line.split(':') for line in response.text.splitlines())
+        for h, count in hashes:
+            if h == suffix:
+                return True, int(count)
+        return False, 0
+    except Exception:
+        return False, 0
 
 
 def analyze_password(password):

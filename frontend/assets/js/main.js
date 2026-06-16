@@ -133,12 +133,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Dictionary Generator Form
     const btnGenDict = document.getElementById('btn-generate-dict');
     if (btnGenDict) {
-        btnGenDict.addEventListener('click', () => {
-            const baseWords = document.getElementById('dict-base-words').value;
+        btnGenDict.addEventListener('click', async () => {
+            const baseWordsStr = document.getElementById('dict-base-words').value;
+            const baseWords = baseWordsStr.split(',').map(s=>s.trim()).filter(Boolean);
             const mutCheckboxes = document.querySelectorAll('#panel-dictionary .custom-checkbox:checked');
             const mutations = Array.from(mutCheckboxes).map(cb => cb.value);
             
-            if (!baseWords.trim()) {
+            if (baseWords.length === 0) {
                 showToast('Please enter base words.', 'warning');
                 return;
             }
@@ -149,25 +150,25 @@ document.addEventListener('DOMContentLoaded', () => {
             
             document.querySelector('#term-dictionary .terminal-content').innerHTML = '';
             
-            const sse = api.generateDictionary(baseWords, mutations);
-            let totalWordsDisplay = document.getElementById('dict-total-words');
-            totalWordsDisplay.style.opacity = '0';
-            
-            sse.addEventListener('message', (e) => {
-                appendToTerminal('dictionary', e.detail);
-                if (e.detail.includes('[DONE]')) {
-                    showToast('Dictionary generation complete.', 'success');
-                    btnText.textContent = 'Generate Wordlist';
-                    btnGenDict.disabled = false;
-                    
-                    // Update total words display & stat
-                    const match = e.detail.match(/Total words: (\d+)/i);
-                    if (match) {
-                        const count = parseInt(match[1]);
+            try {
+                const sse = await api.generateDictionary(baseWords, mutations);
+                let totalWordsDisplay = document.getElementById('dict-total-words');
+                totalWordsDisplay.style.opacity = '0';
+                
+                sse.addEventListener('message', (e) => {
+                    const data = JSON.parse(e.data);
+                    if (data.word) {
+                        appendToTerminal('dictionary', `[GEN] ${data.word}`);
+                    } else if (data.done) {
+                        showToast('Dictionary generation complete.', 'success');
+                        btnText.textContent = 'Generate Wordlist';
+                        btnGenDict.disabled = false;
+                        sse.close();
+                        
+                        const count = data.total;
                         totalWordsDisplay.querySelector('span').textContent = count;
                         totalWordsDisplay.style.opacity = '1';
                         
-                        // Real-time stat update
                         if (window.appStats) {
                             const oldVal = window.appStats['stat-words'];
                             window.appStats['stat-words'] += count;
@@ -177,8 +178,19 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         }
                     }
-                }
-            });
+                });
+                sse.addEventListener('error', (err) => {
+                    console.error("SSE Error:", err);
+                    sse.close();
+                    btnText.textContent = 'Generate Wordlist';
+                    btnGenDict.disabled = false;
+                    showToast('Stream error', 'error');
+                });
+            } catch (err) {
+                showToast('API Error', 'error');
+                btnText.textContent = 'Generate Wordlist';
+                btnGenDict.disabled = false;
+            }
         });
     }
     
@@ -285,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const btnCrack = document.getElementById('btn-start-cracking');
     if (btnCrack) {
-        btnCrack.addEventListener('click', () => {
+        btnCrack.addEventListener('click', async () => {
             const hash = document.getElementById('brute-hash').value;
             const type = document.getElementById('brute-type').value;
             const mode = document.querySelector('input[name="brute-mode"]:checked').value;
@@ -306,43 +318,50 @@ document.addEventListener('DOMContentLoaded', () => {
             
             appendToTerminal('brute', `[INIT] Initializing cracking engine for ${type}...`);
             
-            const sse = api.startBruteForce(hash, type, mode, file ? file.name : null);
-            
-            sse.addEventListener('message', (e) => {
-                const data = JSON.parse(e.detail);
+            try {
+                const sse = await api.startBruteForce(hash, type, mode, file);
                 
-                if (data.type === 'progress') {
-                    updateProgressBar(data.percent, data.eta);
-                    appendToTerminal('brute', data.log);
-                } else if (data.type === 'result') {
+                sse.addEventListener('message', (e) => {
+                    const data = JSON.parse(e.data);
+                    
+                    if (data.type === 'progress') {
+                        updateProgressBar(data.percent, data.eta);
+                        appendToTerminal('brute', data.log);
+                    } else if (data.found || data.exhausted) {
+                        btnText.textContent = 'Start Cracking';
+                        btnCrack.disabled = false;
+                        sse.close();
+                        
+                        if (data.found) {
+                            updateProgressBar(100, '00:00:00');
+                            appendToTerminal('brute', `[SUCCESS] Match found: ${data.password}`);
+                            resDisplay.innerHTML = `
+                                <div class="text-sm opacity-70 mb-1">PASSWORD CRACKED</div>
+                                <div class="text-3xl tracking-widest text-[#00FF41]">${data.password}</div>
+                            `;
+                            resDisplay.classList.remove('hidden');
+                            showToast('Password Cracked Successfully!', 'success');
+                            
+                            if (window.appStats) {
+                                const oldVal = window.appStats['stat-cracked'];
+                                window.appStats['stat-cracked'] += 1;
+                                const el = document.getElementById('stat-cracked');
+                                if (el && typeof animateValue === 'function') {
+                                    animateValue(el, oldVal, window.appStats['stat-cracked'], 1000);
+                                }
+                            }
+                        } else {
+                            appendToTerminal('brute', `[FAILED] Exhausted. Password not found.`);
+                            showToast('Brute force exhausted.', 'error');
+                        }
+                    } else if (data.log) {
+                        appendToTerminal('brute', data.log);
+                    }
+                });
+                sse.addEventListener('error', () => {
+                    sse.close();
                     btnText.textContent = 'Start Cracking';
                     btnCrack.disabled = false;
-                    updateProgressBar(100, '00:00:00');
-                    
-                    resDisplay.classList.remove('hidden');
-                    if (data.success) {
-                        resDisplay.classList.add('bg-[#1A0F0A]', 'text-[#C9A84C]', 'border-[#C9A84C]');
-                        resDisplay.classList.remove('bg-[#8B1A1A]', 'text-[#FDF3E3]');
-                        resDisplay.innerHTML = `SUCCESS: Password Found -> <span class="text-[#FDF3E3] ml-2 text-xl">${data.password}</span>`;
-                        showToast('Password Cracked Successfully!', 'success');
-                        appendToTerminal('brute', `[SUCCESS] Match found: ${data.password}`);
-                        
-                        // Real-time stat update
-                        if (window.appStats) {
-                            const oldVal = window.appStats['stat-cracked'];
-                            window.appStats['stat-cracked'] += 1;
-                            const el = document.getElementById('stat-cracked');
-                            if (el && typeof animateValue === 'function') {
-                                animateValue(el, oldVal, window.appStats['stat-cracked'], 1000);
-                            }
-                        }
-                    } else {
-                        resDisplay.classList.remove('bg-[#1A0F0A]', 'text-[#C9A84C]', 'border-[#C9A84C]');
-                        resDisplay.classList.add('bg-[#8B1A1A]', 'text-[#FDF3E3]');
-                        resDisplay.innerHTML = `FAILURE: Exhausted keyspace. Password not found.`;
-                        showToast('Cracking Failed.', 'error');
-                        appendToTerminal('brute', `[FAILED] No match found.`);
-                    }
                 }
             });
         });
@@ -425,29 +444,55 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const btnAnalyzeFull = document.getElementById('btn-analyze-full');
     if (btnAnalyzeFull && pwdInput) {
-        btnAnalyzeFull.addEventListener('click', () => {
+        btnAnalyzeFull.addEventListener('click', async () => {
             const val = pwdInput.value;
             if (!val) { showToast('Enter password to analyze.', 'warning'); return; }
             
             const term = document.querySelector('#term-strength .terminal-content');
             term.innerHTML = '';
-            appendToTerminal('strength', '[INIT] Running full vulnerability scan...');
-            setTimeout(() => { appendToTerminal('strength', '[SCAN] Checking against leaked databases...'); }, 500);
-            setTimeout(() => { appendToTerminal('strength', '[SCAN] Analyzing pattern predictability...'); }, 1200);
-            setTimeout(() => { 
-                appendToTerminal('strength', '[DONE] Analysis complete. Password not found in known breaches.');
-                showToast('Full analysis complete.', 'success');
+            
+            try {
+                const reader = await api.fullAnalyzeStrength(val);
+                const decoder = new TextDecoder("utf-8");
+                let buffer = "";
                 
-                // Real-time stat update
-                if (window.appStats) {
-                    const oldVal = window.appStats['stat-analyzed'];
-                    window.appStats['stat-analyzed'] += 1;
-                    const el = document.getElementById('stat-analyzed');
-                    if (el && typeof animateValue === 'function') {
-                        animateValue(el, oldVal, window.appStats['stat-analyzed'], 1000);
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); // keep the incomplete line in buffer
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.substring(6));
+                                if (data.log) {
+                                    appendToTerminal('strength', data.log);
+                                }
+                                if (data.done) {
+                                    showToast('Full analysis complete.', 'success');
+                                    // Real-time stat update
+                                    if (window.appStats) {
+                                        const oldVal = window.appStats['stat-analyzed'];
+                                        window.appStats['stat-analyzed'] += 1;
+                                        const el = document.getElementById('stat-analyzed');
+                                        if (el && typeof animateValue === 'function') {
+                                            animateValue(el, oldVal, window.appStats['stat-analyzed'], 1000);
+                                        }
+                                    }
+                                }
+                            } catch (e) {
+                                console.error("SSE parse error", e, line);
+                            }
+                        }
                     }
                 }
-            }, 2000);
+            } catch (err) {
+                showToast('Analysis error', 'error');
+                console.error(err);
+            }
         });
     }
     
